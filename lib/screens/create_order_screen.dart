@@ -32,6 +32,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   List<Courier> _couriers = [];
   Restaurant? _restaurant;
   List<Order> _orders = [];
+  double? _selectedLatitude;
+  double? _selectedLongitude;
 
   @override
   void initState() {
@@ -49,6 +51,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       _restaurant = user!;
       final latitude = _restaurant!.restaurantLocation.latitude;
       final longitude = _restaurant!.restaurantLocation.longitude;
+
       // MongoDB'den kuryeleri al
       final couriers = await MongoDatabase.getCouriersByRestaurantbyId(user.id);
       if (kDebugMode) {
@@ -65,7 +68,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
           couriers: couriers,
           restaurantName: user.name,
           activeOrders: activeOrders,
-          controller: _controller);
+          controller: _controller,
+          createOrder: true);
       // Verileri kontrol edin
       final dataUrl = Uri.dataFromString(
         await _mapcomponent.generateHtmlContent(),
@@ -140,98 +144,101 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
     super.dispose();
   }
 
-@override
-Widget build(BuildContext context) {
-  if (_restaurant == null) {
-    return const Center(
-      child: CircularProgressIndicator(), // Restoran verisi yüklenmediğinde yükleme göstergesi
-    );
-  }
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text('Sipariş Oluştur'),
-    ),
-    body: Row(
-      children: [
-        // Sol taraf: Kurye listesi ve ürün listesi
-        Expanded(
-          flex: 1,
-          child: Column(
-            children: [
-              // Kurye listesi
-              Expanded(
-                flex: 2,
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(10),
-                  itemCount: _couriers.length,
-                  itemBuilder: (context, index) {
-                    final courier = _couriers[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 5),
-                      child: ListTile(
-                        title: Text(courier.name),
-                        subtitle: Text('Aktiflik: ${courier.active}'),
-                        onTap: () {
-                          // Kurye seçildiğinde işlem yapılabilir
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const Divider(thickness: 2), // Ayrım çizgisi
-              // Ürün listesi
-              Expanded(
-                flex: 1,
-                child: Consumer<CartProvider>(
-                  builder: (ctx, cart, _) => ListView.builder(
-                    itemCount: cart.items.length,
+  @override
+  Widget build(BuildContext context) {
+    if (_restaurant == null) {
+      return const Center(
+        child:
+            CircularProgressIndicator(), // Restoran verisi yüklenmediğinde yükleme göstergesi
+      );
+    }
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sipariş Oluştur'),
+      ),
+      body: Row(
+        children: [
+          // Sol taraf: Kurye listesi ve ürün listesi
+          Expanded(
+            flex: 1,
+            child: Column(
+              children: [
+                // Kurye listesi
+                Expanded(
+                  flex: 2,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(10),
+                    itemCount: _couriers.length,
                     itemBuilder: (context, index) {
-                      final cartItem = cart.items.values.toList()[index];
+                      final courier = _couriers[index];
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 5),
                         child: ListTile(
-                          title: Text(cartItem.title),
-                          subtitle: Text('Adet: ${cartItem.quantity}, Fiyat: ${cartItem.price}₺'),
+                          title: Text(courier.name),
+                          subtitle: Text('Aktiflik: ${courier.active}'),
+                          onTap: () {
+                            // Kurye seçildiğinde işlem yapılabilir
+                          },
                         ),
                       );
                     },
                   ),
                 ),
-              ),
-            ],
+                const Divider(thickness: 2), // Ayrım çizgisi
+                // Ürün listesi
+                Expanded(
+                  flex: 1,
+                  child: Consumer<CartProvider>(
+                    builder: (ctx, cart, _) => ListView.builder(
+                      itemCount: cart.items.length,
+                      itemBuilder: (context, index) {
+                        final cartItem = cart.items.values.toList()[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 5),
+                          child: ListTile(
+                            title: Text(cartItem.title),
+                            subtitle: Text(
+                                'Adet: ${cartItem.quantity}, Fiyat: ${cartItem.price}₺'),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const VerticalDivider(thickness: 2, width: 2), // Ayrım çizgisi
-        // Sağ taraf: Harita
-        Expanded(
-          flex: 2,
-          child: MapComponent(
-            latitude: _restaurant!.restaurantLocation.latitude,
-            longitude: _restaurant!.restaurantLocation.longitude,
-            couriers: _couriers,
-            restaurantName: _restaurant!.name,
-            activeOrders: _orders
-                .where((order) => order.status == 'Aktif Sipariş')
-                .toList(),
-            controller: _controller,
+          const VerticalDivider(thickness: 2, width: 2), // Ayrım çizgisi
+          // Sağ taraf: Harita
+          Expanded(
+            flex: 2,
+            child: MapComponent(
+              latitude: _restaurant!.restaurantLocation.latitude,
+              longitude: _restaurant!.restaurantLocation.longitude,
+              couriers: _couriers,
+              restaurantName: _restaurant!.name,
+              activeOrders: _orders
+                  .where((order) => order.status == 'Aktif Sipariş')
+                  .toList(),
+              controller: _controller,
+              createOrder: true,
+            ),
           ),
-        ),
-      ],
-    ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: () {
-        // Sipariş oluşturma işlemi burada yapılabilir
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sipariş oluşturuldu!'),
-          ),
-        );
-      },
-      child: const Icon(Icons.check),
-    ),
-  );
-}
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Sipariş oluşturma işlemi burada yapılabilir
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Sipariş oluşturuldu!'),
+            ),
+          );
+        },
+        child: const Icon(Icons.check),
+      ),
+    );
+  }
 
   Future<WebviewPermissionDecision> _onPermissionRequested(
       String url, WebviewPermissionKind kind, bool isUserInitiated) async {

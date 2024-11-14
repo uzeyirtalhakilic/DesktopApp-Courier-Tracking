@@ -31,7 +31,7 @@ class WebSocketProvider with ChangeNotifier {
     );
   }
 void reconnect() {
-  Future.delayed(Duration(seconds: 5), () {
+  Future.delayed(const Duration(seconds: 5), () {
     WebSocketProvider('ws://$ip:3000');// 5 saniye sonra tekrar dene
   });
 }

@@ -14,6 +14,7 @@ class MapComponent extends StatelessWidget {
   final String restaurantName;
   final List<Order> activeOrders;
   final WebviewController controller; // WebviewController dışarıdan geliyor
+  final bool createOrder;
 
   const MapComponent({
     super.key,
@@ -23,7 +24,7 @@ class MapComponent extends StatelessWidget {
     required this.restaurantName,
     required this.activeOrders,
     required this.controller, // Controller dışarıdan sağlanmalı
-
+    required this.createOrder,
   });
 
   Future<String> generateHtmlContent() async {
@@ -40,7 +41,6 @@ class MapComponent extends StatelessWidget {
             .buffer
             .asUint8List());
 
-    // İşaretçileri oluştur
     String markers = '''
     var restaurantIcon = L.icon({
       iconUrl: 'data:image/png;base64,$restaurantIconBase64',
@@ -67,9 +67,11 @@ class MapComponent extends StatelessWidget {
 
     var courierMarkers = {};
     var customerMarkers = {};
+    var selectedMarker = null; // Daha önce eklenmiş işaretçi kontrolü için değişken
+    var selectedLatLng = null; // İşaretlenen yerin koordinatlarını saklamak için
   ''';
 
-    // Kuryelerin işaretçilerini oluşturun
+    // İşaretçileri oluşturma kodu (kuryeler ve müşteriler için)
     for (var courier in couriers) {
       markers += '''
       courierMarkers['${courier.id.toHexString()}'] = L.marker([${courier.currentLocation.latitude}, ${courier.currentLocation.longitude}], { icon: courierIcon }).addTo(map)
@@ -77,12 +79,44 @@ class MapComponent extends StatelessWidget {
     ''';
     }
 
-    // Müşterilerin işaretçilerini oluştur
     for (var order in activeOrders) {
       markers += '''
       customerMarkers['${order.id.toHexString()}'] = L.marker([${order.customerLocation.latitude}, ${order.customerLocation.longitude}], { icon: customerIcon }).addTo(map)
         .bindPopup('Müşteri: ${order.customer}');
     ''';
+    }
+
+    // Tek seferlik işaretçi ekleme kodunu buraya ekleyin
+    if (createOrder) {
+      markers += '''
+    map.on('click', function(e) {
+      var lat = e.latlng.lat;
+      var lng = e.latlng.lng;
+
+      // Daha önce işaretçi varsa kaldır
+      if (selectedMarker) {
+        map.removeLayer(selectedMarker);
+      }
+
+      // Yeni işaretçiyi ekle ve değişkene ata
+      selectedMarker = L.marker([lat, lng]).addTo(map)
+        .bindPopup('İşaretlenen Nokta: ' + lat.toFixed(4) + ', ' + lng.toFixed(4))
+        .openPopup();
+
+      // İşaretlenen yerin koordinatlarını sakla
+      selectedLatLng = { lat: lat, lng: lng };
+
+      // Flutter'a gönder
+      SendCoordinatesToFlutter(lat, lng);
+    });
+
+    // Flutter ile etkileşim için işlev
+    function SendCoordinatesToFlutter(lat, lng) {
+      if (window.flutter_inappwebview) {
+        window.flutter_inappwebview.callHandler('selectedCoordinates', { latitude: lat, longitude: lng });
+      }
+    }
+  ''';
     }
 
     return '''
@@ -96,20 +130,18 @@ class MapComponent extends StatelessWidget {
           body, html {
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Sayfa genelinde scroll'u kaldırır */
+            overflow: hidden;
           }
-
-        #map {
-          height: 100vh;
-          width: 100vw;
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-        }
-</style>
-
+          #map {
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+          }
+        </style>
     </head>
     <body>
         <div id="map"></div>
@@ -118,23 +150,8 @@ class MapComponent extends StatelessWidget {
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
-            
+
             $markers
-
-            function updateCourierMarker(courierId, latitude, longitude) {
-              if (courierMarkers[courierId]) {
-                courierMarkers[courierId].setLatLng([latitude, longitude]);
-              }
-            }
-
-            // WebSocket bağlantısı ile kurye konum güncellemelerini dinleyin
-            var ws = new WebSocket('ws://localhost:3000');
-            ws.onmessage = function(event) {
-              var data = JSON.parse(event.data);
-              if (data.courierObjectId && data.latitude && data.longitude) {
-                updateCourierMarker(data.courierObjectId, data.latitude, data.longitude);
-              }
-            };
         </script>
     </body>
     </html>
@@ -160,9 +177,9 @@ class MapComponent extends StatelessWidget {
           // Webview'i yükle
           controller.loadUrl(dataUrl);
           return Webview(controller);
-        
         }
       },
     );
   }
+
 }

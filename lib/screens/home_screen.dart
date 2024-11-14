@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final activeOrders =
           orders.where((order) => order.status == 'Aktif Sipariş').toList();
 
-      _mapcomponent = MapComponent(latitude: latitude, longitude: longitude, couriers: couriers, restaurantName: user.name, activeOrders: activeOrders, controller: _controller);
+      _mapcomponent = MapComponent(latitude: latitude, longitude: longitude, couriers: couriers, restaurantName: user.name, activeOrders: activeOrders, controller: _controller, createOrder: false);
       // Verileri kontrol edin
     final dataUrl = Uri.dataFromString(
       await _mapcomponent.generateHtmlContent(),
@@ -285,6 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
               restaurantName: _restaurant!.name , // Restoran adı,
               activeOrders: _orders.where((order) => order.status == 'Aktif Sipariş').toList(),
               controller: _controller, // Dışarıda başlatılmış controller
+              createOrder: false,
             ),
           ),
         ],
