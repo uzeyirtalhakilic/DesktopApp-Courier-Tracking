@@ -24,7 +24,7 @@ This project is a **Windows application** developed using **Flutter**. Its main 
 1. **Install Flutter**: Follow the [Flutter Installation Guide](https://flutter.dev/docs/get-started/install)
 2. Clone the project:
    ```bash
-   git clone https://github.com/your_username/courier-tracking-windows.git
+   git clone https://github.com/uzeyirtalhakilic/DesktopApp-Courier-Tracking
    cd courier-tracking-windows
    ```
 3. Install dependencies:
