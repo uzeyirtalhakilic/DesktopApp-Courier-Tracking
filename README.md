@@ -35,10 +35,11 @@ This project is a **Windows application** developed using **Flutter**. Its main 
 In the Data folder, open the configuration file and modify the IP field to use your own server IP address.
 
 5. Navigate to the mobileapp folder from [MobileApp](https://github.com/uzeyirtalhakilic/MobileApp-Courier-Tracking):
-   ```bash
-    cd server
-    node index
-   ```
+    Start the server by running the following commands
+       ```bash
+        cd server
+        node index
+       ```
 6. Run the application:
    ```bash
    flutter run -d windows
