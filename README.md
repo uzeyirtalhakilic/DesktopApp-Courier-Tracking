@@ -36,10 +36,10 @@ In the Data folder, open the configuration file and modify the IP field to use y
 
 5. Navigate to the mobileapp folder from [MobileApp](https://github.com/uzeyirtalhakilic/MobileApp-Courier-Tracking):
     Start the server by running the following commands
-       ```bash
-        cd server
-        node index
-       ```
+     ```bash
+      cd server
+      node index
+     ```
 6. Run the application:
    ```bash
    flutter run -d windows
