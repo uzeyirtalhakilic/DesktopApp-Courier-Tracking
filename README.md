@@ -1,4 +1,4 @@
-# 🛵🛵🛵 Courier Tracking System - Windows Application 💻
+# 🛵 Courier Tracking System - Windows Application 💻
 
 This project is a **Windows application** developed using **Flutter**. Its main purpose is to provide a platform for **real-time courier tracking** and **order management**.
 
@@ -45,10 +45,4 @@ If you want to contribute to this project, feel free to submit a **pull request*
 
 ## 📌 Note
 This project is **a student project**, developed solely **for learning and self-improvement purposes**.
-
-## 📜 License
-This project is released under the **MIT License**.
-
----
-For more details, check out the [README.md](https://github.com/your_username/courier-tracking-windows) file.
 
