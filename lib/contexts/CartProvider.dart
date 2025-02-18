@@ -89,4 +89,24 @@ class CartItem {
     required this.quantity,
     required this.price,
   });
+
+  // fromJson Fonksiyonu
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      id: json['_id'], // id'nin ObjectId türünde olduğunu unutmayın
+      title: json['title'],
+      quantity: json['quantity'],
+      price: json['price'].toDouble(), // fiyatın double olması gerektiğini unutmayın
+    );
+  }
+
+  // toJson Fonksiyonu
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'title': title,
+      'quantity': quantity,
+      'price': price,
+    };
+  }
 }

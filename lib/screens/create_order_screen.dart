@@ -1,21 +1,20 @@
-// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
+// ignore_for_file: library_private_types_in_public_api
 
 import 'dart:async';
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_courier/components/MapComponent.dart';
 import 'package:flutter_courier/contexts/CartProvider.dart';
 import 'package:flutter_courier/contexts/auth_provider.dart';
-import 'package:flutter_courier/contexts/web_socket_provider.dart';
 import 'package:flutter_courier/dbHelper/mongodb.dart';
 import 'package:flutter_courier/models/courier.dart';
 import 'package:flutter_courier/models/order.dart';
 import 'package:flutter_courier/models/restaurant.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
-import 'package:webview_windows/webview_windows.dart';
-import 'package:window_manager/window_manager.dart';
+
+//! Kuryenin seçilebilmesini sağla. ikisinin arasına konumun latlong unu yazdır..!!! 
+
+//TODO Veritabanında Ordersı güncelle. Sipariş ekleye basınca order eklenmesini sağla.
 
 class CreateOrderScreen extends StatefulWidget {
   const CreateOrderScreen({super.key});
@@ -25,131 +24,41 @@ class CreateOrderScreen extends StatefulWidget {
 }
 
 class _CreateOrderScreenState extends State<CreateOrderScreen> {
-  final TextEditingController _textController = TextEditingController();
-  final WebviewController _controller = WebviewController();
-  final List<StreamSubscription> _subscriptions = [];
-  late MapComponent _mapcomponent;
   List<Courier> _couriers = [];
   Restaurant? _restaurant;
   List<Order> _orders = [];
-  double? _selectedLatitude;
-  double? _selectedLongitude;
+  LatLng? selectedLocation; // Seçilen koordinatlar için değişken
+  Courier? _selectedCourier; // Seçilen kurye için değişken
 
   @override
   void initState() {
     super.initState();
-    _initializeWebview();
+    _initializeData();
   }
 
-  Future<void> _initializeWebview() async {
-    try {
-      await _controller.initialize();
+  Future<void> _initializeData() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    _restaurant = user!;
 
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      Provider.of<WebSocketProvider>(context, listen: false);
-      final user = authProvider.user;
-      _restaurant = user!;
-      final latitude = _restaurant!.restaurantLocation.latitude;
-      final longitude = _restaurant!.restaurantLocation.longitude;
+    // MongoDB'den kuryeleri ve siparişleri al
+    final couriers = await MongoDatabase.getCouriersByRestaurantbyId(user.id);
+    final orders = await MongoDatabase.getOrdersByRestaurantbyId(user.id);
+    final activeOrders =
+        orders.where((order) => order.status == 'Aktif Sipariş').toList();
 
-      // MongoDB'den kuryeleri al
-      final couriers = await MongoDatabase.getCouriersByRestaurantbyId(user.id);
-      if (kDebugMode) {
-        print('Fetched couriers: $couriers');
-      }
-
-      final orders = await MongoDatabase.getOrdersByRestaurantbyId(user.id);
-      final activeOrders =
-          orders.where((order) => order.status == 'Aktif Sipariş').toList();
-
-      _mapcomponent = MapComponent(
-          latitude: latitude,
-          longitude: longitude,
-          couriers: couriers,
-          restaurantName: user.name,
-          activeOrders: activeOrders,
-          controller: _controller,
-          createOrder: true);
-      // Verileri kontrol edin
-      final dataUrl = Uri.dataFromString(
-        await _mapcomponent.generateHtmlContent(),
-        mimeType: 'text/html',
-        encoding: Encoding.getByName('utf-8'),
-      ).toString();
-
-      await _controller.loadUrl(dataUrl);
-
-      // Kuryeleri state'e ekle
-      setState(() {
-        _orders = orders;
-        debugPrint('Orders updated: $_orders');
-        _couriers = couriers;
-        debugPrint('Couriers updated: $_couriers');
-        _restaurant = user;
-        debugPrint('Restaurant updated: $_restaurant');
-      });
-
-      if (_subscriptions.isNotEmpty) {
-        for (var s in _subscriptions) {
-          s.cancel();
-        }
-        _subscriptions.clear();
-      }
-
-      _subscriptions.add(_controller.url.listen((url) {
-        _textController.text = url;
-      }));
-
-      _subscriptions
-          .add(_controller.containsFullScreenElementChanged.listen((flag) {
-        debugPrint('Contains fullscreen element: $flag');
-        windowManager.setFullScreen(flag);
-      }));
-
-      await _controller.setBackgroundColor(Colors.transparent);
-      await _controller.setPopupWindowPolicy(WebviewPopupWindowPolicy.deny);
-
-      if (!mounted) return;
-    } on PlatformException catch (e) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Error'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Code: ${e.code}'),
-                Text('Message: ${e.message}'),
-              ],
-            ),
-            actions: [
-              TextButton(
-                child: const Text('Continue'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              )
-            ],
-          ),
-        );
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    setState(() {
+      _orders = activeOrders;
+      _couriers = couriers;
+      _restaurant = user;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     if (_restaurant == null) {
       return const Center(
-        child:
-            CircularProgressIndicator(), // Restoran verisi yüklenmediğinde yükleme göstergesi
+        child: CircularProgressIndicator(),
       );
     }
     return Scaffold(
@@ -163,7 +72,6 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
             flex: 1,
             child: Column(
               children: [
-                // Kurye listesi
                 Expanded(
                   flex: 2,
                   child: ListView.builder(
@@ -171,21 +79,25 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                     itemCount: _couriers.length,
                     itemBuilder: (context, index) {
                       final courier = _couriers[index];
+                      final isSelected = courier == _selectedCourier;
+
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 5),
+                        color: isSelected ? Colors.blue.shade100 : null, // Seçilen kuryeyi renklendir
                         child: ListTile(
                           title: Text(courier.name),
                           subtitle: Text('Aktiflik: ${courier.active}'),
                           onTap: () {
-                            // Kurye seçildiğinde işlem yapılabilir
+                            setState(() {
+                              _selectedCourier = courier; // Seçilen kuryeyi tut
+                            });
                           },
                         ),
                       );
                     },
                   ),
                 ),
-                const Divider(thickness: 2), // Ayrım çizgisi
-                // Ürün listesi
+                const Divider(thickness: 2),
                 Expanded(
                   flex: 1,
                   child: Consumer<CartProvider>(
@@ -208,8 +120,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
               ],
             ),
           ),
-          const VerticalDivider(thickness: 2, width: 2), // Ayrım çizgisi
-          // Sağ taraf: Harita
+          const VerticalDivider(thickness: 2, width: 2),
           Expanded(
             flex: 2,
             child: MapComponent(
@@ -217,31 +128,37 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
               longitude: _restaurant!.restaurantLocation.longitude,
               couriers: _couriers,
               restaurantName: _restaurant!.name,
-              activeOrders: _orders
-                  .where((order) => order.status == 'Aktif Sipariş')
-                  .toList(),
-              controller: _controller,
+              activeOrders: _orders,
               createOrder: true,
+              onLocationSelected: (LatLng location) {
+                setState(() {
+                  selectedLocation = location;
+                });
+              },
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Sipariş oluşturma işlemi burada yapılabilir
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Sipariş oluşturuldu!'),
-            ),
-          );
+          if (selectedLocation != null && _selectedCourier != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Sipariş konumu: ${selectedLocation!.latitude}, ${selectedLocation!.longitude}, Kurye: ${_selectedCourier!.name}',
+                ),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Lütfen bir konum ve kurye seçin.'),
+              ),
+            );
+          }
         },
         child: const Icon(Icons.check),
       ),
     );
-  }
-
-  Future<WebviewPermissionDecision> _onPermissionRequested(
-      String url, WebviewPermissionKind kind, bool isUserInitiated) async {
-    return WebviewPermissionDecision.allow; // İzin verilmesi durumu
   }
 }

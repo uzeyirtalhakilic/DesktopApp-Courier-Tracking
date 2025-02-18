@@ -1,19 +1,28 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_courier/data/data.dart';
 import 'package:flutter_courier/models/courier.dart';
 import 'package:flutter_courier/models/location.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebSocketProvider with ChangeNotifier {
-  final WebSocketChannel channel;
-  final Map<String, Courier> couriers = {}; // Kuryeleri ID'ye göre saklayın
+  final String url;
+  late WebSocketChannel channel;
+  final Map<String, Courier> couriers = {}; // Kuryeleri ID'ye göre sakla
+  final StreamController<Map<String, Courier>> _courierController = StreamController.broadcast();
 
-  WebSocketProvider(String url)
-      : channel = WebSocketChannel.connect(Uri.parse(url)) {
+  WebSocketProvider(this.url) {
+    _connect();
+  }
+
+  // Kuryelerin güncel konumlarını dinlemek için dışa açık stream
+  Stream<Map<String, Courier>> get courierStream => _courierController.stream;
+
+  void _connect() {
+    channel = WebSocketChannel.connect(Uri.parse(url));
     debugPrint('WebSocket bağlantısı kuruldu');
 
     channel.stream.listen(
@@ -23,18 +32,22 @@ class WebSocketProvider with ChangeNotifier {
       },
       onError: (error) {
         debugPrint('WebSocket hata: $error');
+        _reconnect();
       },
       onDone: () {
         debugPrint('WebSocket bağlantısı kapandı');
-        reconnect();
+        _reconnect();
       },
     );
   }
-void reconnect() {
-  Future.delayed(const Duration(seconds: 5), () {
-    WebSocketProvider('ws://$ip:3000');// 5 saniye sonra tekrar dene
-  });
-}
+
+  void _reconnect() {
+    Future.delayed(const Duration(seconds: 5), () {
+      debugPrint('WebSocket yeniden bağlanıyor...');
+      _connect();
+    });
+  }
+
   void _handleIncomingMessage(String message) {
     try {
       final data = jsonDecode(message);
@@ -59,23 +72,28 @@ void reconnect() {
 
   void _updateCourierLocation(String courierId, double latitude, double longitude) {
     if (couriers.containsKey(courierId)) {
+      // Mevcut kurye konumunu güncelle
       couriers[courierId]?.updateLocation(latitude, longitude);
     } else {
+      // Yeni kurye oluştur ve ekle
       couriers[courierId] = Courier(
         id: ObjectId.fromHexString(courierId),
-        nickname: '', // Varsayılan değer
-        password: '', // Varsayılan değer
+        nickname: '',
+        password: '',
         restaurantId: ObjectId(),
         orders: [],
         active: '',
         currentLocation: Location(latitude: latitude, longitude: longitude),
-        name: '', // Varsayılan değer
+        name: '',
       );
     }
 
-    notifyListeners(); // Dinleyicilere güncellemeleri bildir
+    // Güncel kurye verilerini stream'e gönder
+    _courierController.add(Map<String, Courier>.from(couriers));
+    notifyListeners();
   }
 
+  // Kurye konumu gönderme
   void sendLocation(Courier courier) {
     final dataToSend = {
       'courierObjectId': courier.id.toHexString(),
@@ -88,6 +106,7 @@ void reconnect() {
   @override
   void dispose() {
     channel.sink.close();
+    _courierController.close();
     super.dispose();
   }
 }

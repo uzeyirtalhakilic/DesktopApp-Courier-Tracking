@@ -56,8 +56,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
-
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -79,26 +77,28 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          CustomDrawer(
-            onMenuItemSelected: (int index) {
-              setState(() {
-                _currentIndex = index; // Meniden seçilen ekranın indeksini güncelleyin
-              });
-            },
+    return Consumer<WebSocketProvider>(
+      builder: (context, webSocketProvider, child) {
+        return Scaffold(
+          body: Row(
+            children: [
+              CustomDrawer(
+                onMenuItemSelected: (int index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
+              ),
+              Expanded(
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: _screens,
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: IndexedStack(
-              index: _currentIndex,
-              children: _screens,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
-
-
