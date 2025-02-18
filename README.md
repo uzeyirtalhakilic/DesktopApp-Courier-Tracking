@@ -25,7 +25,7 @@ This project is a **Windows application** developed using **Flutter**. Its main 
 2. Clone the project:
    ```bash
    git clone https://github.com/uzeyirtalhakilic/DesktopApp-Courier-Tracking
-   cd courier-tracking-windows
+   cd DesktopApp-Courier-Tracking
    ```
 3. Install dependencies:
    ```bash
