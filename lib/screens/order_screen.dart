@@ -63,7 +63,7 @@ class _OrderScreenState extends State<OrderScreen> {
                     padding: const EdgeInsets.all(15),
                     margin: const EdgeInsets.only(bottom: 10),
                     decoration: BoxDecoration(
-                      color: isActiveOrder ? Colors.blue : Colors.grey[200],
+                      color: isActiveOrder ? Colors.redAccent.shade700 : Colors.grey.shade800,
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
@@ -79,28 +79,28 @@ class _OrderScreenState extends State<OrderScreen> {
                         Text(
                           'Restoran: ${_restaurant.name}', // Restoran adı
                           style: TextStyle(
-                            color: isActiveOrder ? Colors.white : Colors.black,
+                            color: Colors.grey.shade300,
                             fontSize: 16,
                           ),
                         ),
                         Text(
                           'Müşteri: ${order.customer}', // Müşteri adı
                           style: TextStyle(
-                            color: isActiveOrder ? Colors.white : Colors.black,
+                            color: Colors.grey.shade300,
                             fontSize: 16,
                           ),
                         ),
                         Text(
                           'Durum: ${order.status}', // Sipariş durumu
                           style: TextStyle(
-                            color: isActiveOrder ? Colors.white : Colors.black,
+                            color: Colors.grey.shade300,
                             fontSize: 16,
                           ),
                         ),
                         Text(
                           'Tarih: ${order.date}', // Sipariş tarihi
                           style: TextStyle(
-                            color: isActiveOrder ? Colors.white : Colors.black,
+                            color: Colors.grey.shade300,
                             fontSize: 16,
                           ),
                         ),

@@ -10,8 +10,6 @@ import 'package:flutter_courier/contexts/auth_provider.dart';
 import 'dart:async';
 import 'package:flutter_courier/components/MapComponent.dart';
 
-//TODO Kuryelerin müsaitlik durumu için ayarlar kısmı ekle kim moladaysa soluk gözüksün..!!!
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -36,11 +34,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _restaurant = user;
 
     if (_restaurant != null) {
-      // MongoDB'den kurye ve sipariş verilerini al
       final couriers = await MongoDatabase.getCouriersByRestaurantbyId(user!.id);
       final orders = await MongoDatabase.getOrdersByRestaurantbyId(user.id);
       
-      // State güncelle
       setState(() {
         _couriers = couriers;
         _orders = orders;
@@ -51,9 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_restaurant == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Scaffold(
@@ -72,53 +66,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       final courier = _couriers[index];
                       final isActiveCourier = courier.active == "Boşta";
                       final isOnWay = courier.active == "Yolda";
-                      return GestureDetector(
-                        onTap: () {
-                          // Kurye tıklanma işlemleri
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(15),
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            color: isActiveCourier
-                                ? Colors.green
-                                : isOnWay
-                                    ? Colors.blue
-                                    : Colors.red,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                offset: const Offset(0, 2),
-                                blurRadius: 4,
-                              ),
-                            ],
+                      return Card(
+                        color: isActiveCourier
+                            ? Colors.deepOrange.shade700
+                            : isOnWay
+                                ? Colors.redAccent.shade700
+                                : Colors.grey.shade800,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 4,
+                        child: ListTile(
+                          title: Text(
+                            courier.name,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Kurye: ${courier.name}',
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 16),
-                              ),
-                              Text(
-                                'Aktiflik: ${courier.active}',
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 16),
-                              ),
-                            ],
+                          subtitle: Text(
+                            "Durum: ${courier.active}",
+                            style: TextStyle(color: Colors.grey.shade300),
                           ),
+                          leading: const Icon(Icons.motorcycle, color: Colors.white),
                         ),
                       );
                     },
                   ),
                 ),
-                const Divider(
-                  height: 2,
-                  color: Colors.blue,
-                  thickness: 5.0,
-                ),
+                const Divider(color: Colors.deepOrange, thickness: 4.0),
                 Expanded(
                   flex: 1,
                   child: ListView.builder(
@@ -127,45 +100,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       final order = _orders[index];
                       final isActiveOrder = order.status == 'Aktif Sipariş';
-
-                      return Container(
-                        padding: const EdgeInsets.all(15),
-                        margin: const EdgeInsets.only(bottom: 10),
-                        decoration: BoxDecoration(
-                          color: isActiveOrder ? Colors.green : Colors.red,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              offset: const Offset(0, 2),
-                              blurRadius: 4,
-                            ),
-                          ],
+                      return Card(
+                        color: isActiveOrder ? Colors.redAccent.shade700 : Colors.grey.shade800,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Sipariş ID: ${order.id}',
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 16),
-                            ),
-                            Text(
-                              'Müşteri İsim: ${order.customer}',
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 16),
-                            ),
-                            Text(
-                              'Durum: ${order.status}',
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 16),
-                            ),
-                            Text(
-                              'Tarih: ${order.date}',
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 16),
-                            ),
-                          ],
+                        elevation: 4,
+                        child: ListTile(
+                          title: Text(
+                            'Sipariş: ${order.id}',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Müşteri: ${order.customer}', style: TextStyle(color: Colors.grey.shade300)),
+                              Text('Durum: ${order.status}', style: TextStyle(color: Colors.grey.shade300)),
+                              Text('Tarih: ${order.date}', style: TextStyle(color: Colors.grey.shade300)),
+                            ],
+                          ),
+                          leading: const Icon(Icons.shopping_bag, color: Colors.white),
                         ),
                       );
                     },
@@ -181,11 +135,9 @@ class _HomeScreenState extends State<HomeScreen> {
               longitude: _restaurant!.restaurantLocation.longitude,
               couriers: _couriers,
               restaurantName: _restaurant!.name,
-              activeOrders: _orders
-                  .where((order) => order.status == 'Aktif Sipariş')
-                  .toList(),
+              activeOrders: _orders.where((order) => order.status == 'Aktif Sipariş').toList(),
               createOrder: false,
-              onLocationSelected: (LatLng ) {  }, // HomeScreen'de sipariş oluşturma kapalı
+              onLocationSelected: (LatLng) {},
             ),
           ),
         ],

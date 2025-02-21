@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_courier/contexts/web_socket_provider.dart';
 import 'package:flutter_courier/models/courier.dart';
 import 'package:flutter_courier/models/order.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MapComponent extends StatefulWidget {
   final double latitude;
@@ -35,6 +36,10 @@ class MapComponent extends StatefulWidget {
 class _MapComponentState extends State<MapComponent> {
   LatLng? selectedLocation;
 
+  final String styleUrl =
+      "https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png";
+  final String apiKey = "7c199992-0578-4a72-9604-df1cb1c77f5d"; // Replace with your own API key
+
   @override
   Widget build(BuildContext context) {
     final webSocketProvider = Provider.of<WebSocketProvider>(context);
@@ -52,37 +57,51 @@ class _MapComponentState extends State<MapComponent> {
           }
         },
       ),
+      nonRotatedChildren: [
+        RichAttributionWidget(attributions: [
+          TextSourceAttribution("Stadia Maps",
+              onTap: () => launchUrl(Uri.parse("https://stadiamaps.com/")),
+              prependCopyright: true),
+          TextSourceAttribution("OpenMapTiles",
+              onTap: () => launchUrl(Uri.parse("https://openmaptiles.org/")),
+              prependCopyright: true),
+          TextSourceAttribution("OpenStreetMap",
+              onTap: () => launchUrl(Uri.parse("https://www.openstreetmap.org/copyright")),
+              prependCopyright: true),
+        ])
+      ],
       children: [
         TileLayer(
-          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          urlTemplate: "$styleUrl?api_key=$apiKey",
+          additionalOptions: {
+            "api_key": apiKey,
+          },
+          maxZoom: 20,
+          maxNativeZoom: 20,
         ),
-        // Restoran ve müşteri markerları sabit olduğu için statik bir MarkerLayer kullanabiliriz
         MarkerLayer(
           markers: [
-            // Restoran Marker
             Marker(
               point: LatLng(widget.latitude, widget.longitude),
-                child: Image.asset(
-                'assets/markers/restaurantMarker.png',
-                width: 50,
-                height: 50,
+              child: const Icon(
+                Icons.store,
+                color: Colors.orange,
+                size: 40,
               ),
             ),
-            // Müşteri Marker'ları
             ...widget.activeOrders.map((order) {
               return Marker(
                 point: LatLng(
                   order.customerLocation.latitude,
                   order.customerLocation.longitude,
                 ),
-                child: Image.asset(
-                  'assets/markers/customerMarker.png',
-                  width: 50,
-                  height: 50,
+                child: const Icon(
+                  Icons.person_pin_circle,
+                  color: Colors.red,
+                  size: 35,
                 ),
               );
             }),
-            // Seçili Konum Marker'ı
             if (selectedLocation != null && widget.createOrder)
               Marker(
                 point: selectedLocation!,
@@ -94,12 +113,11 @@ class _MapComponentState extends State<MapComponent> {
               ),
           ],
         ),
-        // Kurye Marker'ları dinamik olduğu için StreamBuilder kullanıyoruz
         StreamBuilder<Map<String, Courier>>(
-          stream: webSocketProvider.courierStream, // WebSocket üzerinden kurye güncellemelerini dinler
+          stream: webSocketProvider.courierStream,
           builder: (context, snapshot) {
             if (!snapshot.hasData) return const SizedBox();
-            
+
             final courierMarkers = snapshot.data!.entries.map((entry) {
               final courier = entry.value;
               return Marker(
@@ -107,10 +125,10 @@ class _MapComponentState extends State<MapComponent> {
                   courier.currentLocation.latitude,
                   courier.currentLocation.longitude,
                 ),
-                child: Image.asset(
-                  'assets/markers/motorcycleMarker.png',
-                  width: 50,
-                  height: 50,
+                child: const Icon(
+                  Icons.motorcycle,
+                  color: Colors.black,
+                  size: 35,
                 ),
               );
             }).toList();

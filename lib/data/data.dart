@@ -6,7 +6,7 @@ import 'package:flutter_courier/models/courier.dart';
 import 'package:flutter_courier/models/order.dart';
 import 'package:flutter_courier/models/restaurant.dart';
 
-const String ip = '192.168.1.124';
+const String ip = '192.168.1.133';
 
 // ignore: constant_identifier_names
 const String API_URL = 'http://$ip:3000';

@@ -12,8 +12,6 @@ import 'package:flutter_courier/models/restaurant.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
-//! Kuryenin seçilebilmesini sağla. ikisinin arasına konumun latlong unu yazdır..!!! 
-
 //TODO Veritabanında Ordersı güncelle. Sipariş ekleye basınca order eklenmesini sağla.
 
 class CreateOrderScreen extends StatefulWidget {
