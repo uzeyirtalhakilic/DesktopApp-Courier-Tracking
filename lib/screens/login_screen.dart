@@ -73,27 +73,25 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF42A5F5), Color(0xFF1A237E)],
+                  colors: [Color(0xFFFF8C00), Color(0xFF8B0000)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
               ),
-              child: const Stack(
+              child: Stack(
                 children: [
                   // Arka plana motokurye ikonu ekleniyor
                   Positioned.fill(
                     child: Opacity(
-                      opacity:
-                          0.2, // İkonun saydamlığı, yazının okunabilirliği için
-                      child: Icon(
-                        Icons.storefront_outlined, // Motokurye ikonu
-                        size: 300, // İkonun boyutu
-                        color: Colors.white,
+                      opacity: 0.1, // Görüntünün saydamlığı, yazının okunabilirliği için
+                      child: Image.asset(
+                        'assets/logo.png', // Kullanılacak resim dosyası
+                        fit: BoxFit.contain, // Resmi boyuta uygun şekilde sığdırır
                       ),
                     ),
                   ),
                   // Hoş Geldiniz yazısı üstte olacak
-                  Center(
+                  const Center(
                     child: Text(
                       'Hoş Geldiniz',
                       style: TextStyle(
@@ -121,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        'Giriş Yap',
+                        'Giriş Yapınız',
                         style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
@@ -213,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF42A5F5), Color(0xFF1A237E)],
+          colors: [Color(0xFFFF8C00), Color(0xFF8B0000)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

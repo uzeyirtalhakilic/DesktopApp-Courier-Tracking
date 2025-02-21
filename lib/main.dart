@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Courier',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.orange,
       ),
       home: const LoginScreen(), // İlk ekran olarak LoginScreen ayarlandı
       routes: {

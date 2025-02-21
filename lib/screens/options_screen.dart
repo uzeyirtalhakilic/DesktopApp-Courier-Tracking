@@ -27,7 +27,7 @@ class OptionsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Mehel Ar-Ge ve Otomasyon',
+                  'Kurye Takip Sistemi',
                 ),
               ],
             ),

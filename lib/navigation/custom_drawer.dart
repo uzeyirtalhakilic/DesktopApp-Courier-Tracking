@@ -31,8 +31,8 @@ class _CustomDrawerState extends State<CustomDrawer> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFF42A5F5),
-                Color(0xFF1A237E),
+                Color(0xFFFF8C00),
+                Color(0xFF8B0000)
               ],
             ),
             boxShadow: [
@@ -65,7 +65,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(
-                    'Mehel Ar-Ge',
+                    'Courier Tracking',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 22,
@@ -156,7 +156,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 },
               );
             },
-            backgroundColor: const Color(0xFF42A5F5),
+            backgroundColor: const Color(0xFFFF8C00),
             child: const Icon(Icons.add_shopping_cart),
           ),
         ),

@@ -111,7 +111,7 @@ class _ProductModalState extends State<ProductModal> {
             },
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.blue[700],
+                color: const Color(0xFF8B0000),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
@@ -157,7 +157,7 @@ class _ProductModalState extends State<ProductModal> {
             },
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.green[700],
+                color: const Color(0xFFFF8C00),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
